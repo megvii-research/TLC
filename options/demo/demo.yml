@@ -1,0 +1,38 @@
+# ------------------------------------------------------------------------
+# Copyright (c) 2021 megvii-model. All Rights Reserved.
+# ------------------------------------------------------------------------
+# Modified from BasicSR (https://github.com/xinntao/BasicSR)
+# Copyright 2018-2020 BasicSR Authors
+# ------------------------------------------------------------------------
+# general settings
+name: demo
+model_type: ImageRestorationModel
+scale: 1
+num_gpu: 1 # set num_gpu: 0 for cpu mode
+manual_seed: 10
+
+# single image inference and save image
+img_path:
+  input_img: ./demo/GOPR0384_11_00-000001.png
+  output_img: ./demo/demo1.png
+
+# network structures
+network_g:
+  type: MPRNetLocal
+  base_size: 384
+
+# path
+path:
+  pretrain_network_g: ./experiments/pretrained_models/MPRNet-GoPro.pth
+  strict_load_g: true
+  resume_state: ~
+  param_key: state_dict
+
+# validation settings
+val:
+  grids: false
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
