@@ -1,6 +1,11 @@
-Revisiting Global Statistics Aggregation for Improving Image Restoration
-========
-<!-- #### Xiaojie Chu, Liangyu Chen, Chengpeng Chen, Xin Lu -->
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-gopro)](https://paperswithcode.com/sota/deblurring-on-gopro?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-hide)](https://paperswithcode.com/sota/deblurring-on-hide?p=revisiting-global-statistics-aggregation-for)
+
+# Revisiting Global Statistics Aggregation for Improving Image Restoration
+#### Xiaojie Chu, Liangyu Chen, Chengpeng Chen, Xin Lu
+#### Paper: https://arxiv.org/pdf/2112.04491.pdf
+
+
 
 ## Introduction 
 This repository is an official implementation of the [TLSC](https://arxiv.org/pdf/2112.04491.pdf). We propose **Test-time Local Statistics Converter (TLSC)**, which replaces the statistic aggregation region from the entire spatial dimension to the local window, to mitigate the issue between training and testing. Our approach has no requirement of retraining or finetuning, and only induces marginal extra costs.
@@ -16,7 +21,7 @@ To solve this issue, we propose a simple approach, Test-time Local Statistics Co
 
 
 ## Usage
----
+
 ### Installation
 
 This implementation based on [BasicSR](https://github.com/xinntao/BasicSR) which is a open source toolbox for image/video restoration tasks. 
@@ -147,7 +152,7 @@ This project is under the MIT license, and it is based on [BasicSR](https://gith
 
 
 ## Citations
----
+
 If TLSC helps your research or work, please consider citing TLSC.
 ```
 @article{chu2021tlsc,
@@ -159,5 +164,5 @@ If TLSC helps your research or work, please consider citing TLSC.
 ```
 
 ## Contact
----
+
 If you have any questions, please contact chuxiaojie@megvii.com or chenliangyu@megvii.com.
