@@ -77,7 +77,7 @@ python setup.py develop
   * download [pretrained HINet](https://drive.google.com/file/d/1dw8PKVkLfISzNtUu3gqGh83NBO83ZQ5n/view?usp=sharing) to ./experiments/pretrained_models/HINet-GoPro.pth
   * ```python basicsr/test.py -opt options/test/HIDE/MPRNetLocal-HIDE.yml  ```
 
-  * download [pretrained MPRNet](https://drive.google.com/drive/folders/12jgrGdIh_lfiSsXyo-QicQuZYcLXp9rP?usp=sharing) to ./experiments/pretrained_models/MPRNet-GoPro.pth
+  * download [pretrained MPRNet](https://drive.google.com/file/d/1QwQUVbk6YVOJViCsOKYNykCsdJSVGRtb/view) to ./experiments/pretrained_models/MPRNet-GoPro.pth
   * ```python basicsr/test.py -opt options/test/HIDE/MPRNetLocal-HIDE.yml  ```
   
 </details>
@@ -103,7 +103,7 @@ python setup.py develop
   * download [pretrained HINet](https://drive.google.com/file/d/1dw8PKVkLfISzNtUu3gqGh83NBO83ZQ5n/view?usp=sharing) to ./experiments/pretrained_models/HINet-GoPro.pth
   * ```python basicsr/test.py -opt options/test/GoPro/MPRNetLocal-GoPro.yml  ```
 
-  * download [pretrained MPRNet](https://drive.google.com/drive/folders/12jgrGdIh_lfiSsXyo-QicQuZYcLXp9rP?usp=sharing) to ./experiments/pretrained_models/MPRNet-GoPro.pth
+  * download [pretrained MPRNet](https://drive.google.com/file/d/1QwQUVbk6YVOJViCsOKYNykCsdJSVGRtb/view) to ./experiments/pretrained_models/MPRNet-GoPro.pth
   * ```python basicsr/test.py -opt options/test/GoPro/MPRNetLocal-GoPro.yml  ```
   
 </details>
