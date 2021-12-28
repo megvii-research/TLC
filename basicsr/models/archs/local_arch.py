@@ -120,7 +120,7 @@ def replace_layers(model, base_size, fast_imp, **kwargs):
         if isinstance(m, nn.InstanceNorm2d):
             norm = LocalInstanceNorm2d(num_features=m.num_features, eps=m.eps, momentum=m.momentum, affine=m.affine, track_running_stats=m.track_running_stats)
             norm.avgpool.base_size = base_size # bad code
-            norm.avgpool.base_size = fast_imp 
+            norm.avgpool.fast_imp = fast_imp 
             setattr(model, n, norm)
 
 class Local_Base():
