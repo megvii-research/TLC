@@ -45,8 +45,8 @@ python setup.py develop
 
 * ```python basicsr/demo.py -opt options/demo/demo.yml```
   * modified your [input and output path](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L16-L17)
-  * [define network](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L20-L24)
-  * [pretrained model](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L28), it should match the define network.
+  * [define network](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L20-L22)
+  * [pretrained model](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L26), it should match the define network.
      * for pretrained model, see [here](https://github.com/megvii-research/tlsc/blob/main/experiments/pretrained_models/README.md)
 
 ### Main Results
