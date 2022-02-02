@@ -10,10 +10,9 @@ from os import path as osp
 
 from basicsr.data import create_dataloader, create_dataset
 from basicsr.models import create_model
-from basicsr.train import parse_options
 from basicsr.utils import (get_env_info, get_root_logger, get_time_str,
                            make_exp_dirs)
-from basicsr.utils.options import dict2str
+from basicsr.utils.options import dict2str, parse_options
 
 
 def main():
