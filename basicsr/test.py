@@ -15,9 +15,9 @@ from basicsr.utils import (get_env_info, get_root_logger, get_time_str,
 from basicsr.utils.options import dict2str, parse_options
 
 
-def main():
+def test_pipeline(root_path):
     # parse options, set distributed setting, set ramdom seed
-    opt = parse_options(is_train=False)
+    opt, _ = parse_options(root_path, is_train=False)
 
     torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
@@ -64,4 +64,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    test_pipeline(root_path)

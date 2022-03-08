@@ -10,14 +10,14 @@ import torch
 from basicsr.models import create_model
 from basicsr.utils.options import parse_options
 from basicsr.utils import FileClient, imfrombytes, img2tensor, padding
-
+from os import path as osp
 # from basicsr.utils import (get_env_info, get_root_logger, get_time_str,
 #                            make_exp_dirs)
 # from basicsr.utils.options import dict2str
 
-def main():
+def main(root_path):
     # parse options, set distributed setting, set ramdom seed
-    opt = parse_options(is_train=False)
+    opt, _ = parse_options(root_path, is_train=False)
 
     img_path = opt['img_path'].get('input_img')
     output_path = opt['img_path'].get('output_img')
@@ -43,5 +43,6 @@ def main():
     print('inference {} .. finished.'.format(img_path))
 
 if __name__ == '__main__':
-    main()
+    root_path = osp.abspath(osp.join(__file__, osp.pardir, osp.pardir))
+    main(root_path)
 
