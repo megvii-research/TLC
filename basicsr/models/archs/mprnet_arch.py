@@ -39,6 +39,10 @@ class CALayer(nn.Module):
     def forward(self, x):
         y = self.avg_pool(x)
         y = self.conv_du(y)
+        h, w = x.shape[2:]
+        _h, _w = y.shape[2:]
+        pad2d = ((w - _w)//2, (w - _w + 1)//2, (h - _h) // 2, (h - _h + 1) // 2)
+        y = torch.nn.functional.pad(y, pad2d, mode='replicate')
         return x * y
 
 
@@ -310,7 +314,10 @@ class MPRNet(nn.Module):
         x2bot_samfeats, stage1_img_bot = self.sam12(res1_bot[0], x2bot_img)
 
         ## Output image at Stage 1
-        stage1_img = torch.cat([stage1_img_top, stage1_img_bot],2) 
+        # stage1_img = torch.cat([stage1_img_top, stage1_img_bot],2) 
+
+        del stage1_img_top, stage1_img_bot, feat1_ltop, feat1_rtop, feat1_lbot, feat1_rbot, x1ltop, x1rtop, x1lbot, x1rbot
+        torch.cuda.empty_cache()
         ##-------------------------------------------
         ##-------------- Stage 2---------------------
         ##-------------------------------------------
@@ -335,7 +342,8 @@ class MPRNet(nn.Module):
         ## Apply SAM
         x3_samfeats, stage2_img = self.sam23(res2[0], x3_img)
 
-
+        del stage2_img, x2top, x2bot, x2top_cat, x2bot_cat, feat2_top, feat2_bot
+        torch.cuda.empty_cache()
         ##-------------------------------------------
         ##-------------- Stage 3---------------------
         ##-------------------------------------------

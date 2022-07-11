@@ -1,23 +1,19 @@
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-gopro)](https://paperswithcode.com/sota/deblurring-on-gopro?p=revisiting-global-statistics-aggregation-for)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-hide-trained-on-gopro)](https://paperswithcode.com/sota/deblurring-on-hide-trained-on-gopro?p=revisiting-global-statistics-aggregation-for)
 
-# Revisiting Global Statistics Aggregation for Improving Image Restoration
+# Improving Image Restoration by Revisiting Global Information Aggregation
 #### Xiaojie Chu, Liangyu Chen, Chengpeng Chen, Xin Lu
 #### Paper: https://arxiv.org/pdf/2112.04491.pdf
 
 
 
 ## Introduction 
-This repository is an official implementation of the [TLSC](https://arxiv.org/pdf/2112.04491.pdf). We propose **Test-time Local Statistics Converter (TLSC)**, which replaces the statistic aggregation region from the entire spatial dimension to the local window, to mitigate the issue between training and testing. Our approach has no requirement of retraining or finetuning, and only induces marginal extra costs.
+This repository is an official implementation of the [TLC](https://arxiv.org/pdf/2112.04491.pdf). We propose **Test-time Local Converter (TLC)**, which convert the global operation to a local one so that it extract representations based on local spatial region of features as in training phase. Our approach has no requirement of retraining or finetuning, and only induces marginal extra costs.
 
 <img src="figures/pipeline.png" alt="arch" style="zoom:100%;" />
 
-Illustration of training and testing schemes of image restoration. From left to right: image from the dataset; input for the restorer (patches or entire-image depend on the scheme); aggregating statistics from the feature map. For (a), (b), and (c), statistics are aggregated along the entire spatial dimension. (d) Ours, statistics are aggregated in a local region for each pixel. 
-
 ### Abstract
-> Global spatial statistics, which are aggregated along entire spatial dimensions, are widely used in top-performance image restorers. For example, mean, variance in Instance Normalization (IN) which is adopted by HINet, and global average pooling (ie, mean) in Squeeze and Excitation (SE) which is applied to MPRNet.
-This paper first shows that statistics aggregated on the patches-based/entire-image-based feature in the training/testing phase respectively may distribute very differently and lead to performance degradation in image restorers. It has been widely overlooked by previous works.
-To solve this issue, we propose a simple approach, Test-time Local Statistics Converter (TLSC), that replaces the region of statistics aggregation operation from global to local, only in the test time. Without retraining or finetuning, our approach significantly improves the image restorer's performance. In particular, by extending SE with TLSC to the state-of-the-art models, MPRNet boost by 0.65 dB in PSNR on GoPro dataset, achieves 33.31 dB, exceeds the previous best result 0.6 dB. In addition, we simply apply TLSC to the high-level vision task, ie, semantic segmentation, and achieves competitive results. Extensive quantity and quality experiments are conducted to demonstrate TLSC solves the issue with marginal costs while significant gain.
+> Global operations, such as global average pooling, are widely used in top-performance image restorers. They aggregate global information from input features along entire spatial dimensions but behave differently during training and inference in image restoration tasks: they are based on different regions, namely the cropped patches (from images) and the full-resolution images. This paper revisits global information aggregation and finds that the image-based features during inference have a different distribution than the patch-based features during training. This train-test inconsistency negatively impacts the performance of models, which is severely overlooked by previous works. To reduce the inconsistency and improve test-time performance, we propose a simple method called Test-time Local Converter (TLC). Our TLC converts global operations to local ones only during inference so that they aggregate features within local spatial regions rather than the entire large images. The proposed method can be applied to various global modules (e.g., normalization, channel and spatial attention) with negligible costs. Without the need for any fine-tuning, TLC improves state-of-the-art results on several image restoration tasks, including single-image motion deblurring, video deblurring, defocus deblurring, and image denoising. In particular, with TLC, our Restormer-Local improves the state-of-the-art result in single image deblurring from 32.92 dB to 33.57 dB on GoPro dataset.
 
 
 ## Usage
@@ -34,8 +30,8 @@ cuda 10.2
 
 
 ```
-git clone https://github.com/megvii-research/tlsc.git
-cd tlsc
+git clone https://github.com/megvii-research/tlc.git
+cd tlc
 pip install -r requirements.txt
 python setup.py develop
 ```
@@ -44,21 +40,23 @@ python setup.py develop
 
 
 * ```python basicsr/demo.py -opt options/demo/demo.yml```
-  * modified your [input and output path](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L16-L17)
-  * [define network](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L20-L22)
-  * [pretrained model](https://github.com/megvii-research/tlsc/blob/main/options/demo/demo.yml#L26), it should match the define network.
-     * for pretrained model, see [here](https://github.com/megvii-research/tlsc/blob/main/experiments/pretrained_models/README.md)
+  * modified your [input and output path](https://github.com/megvii-research/tlc/blob/main/options/demo/demo.yml#L16-L17)
+  * [define network](https://github.com/megvii-research/tlc/blob/main/options/demo/demo.yml#L20-L22)
+  * [pretrained model](https://github.com/megvii-research/tlc/blob/main/options/demo/demo.yml#L26), it should match the define network.
+     * for pretrained model, see [here](https://github.com/megvii-research/tlc/blob/main/experiments/pretrained_models/README.md)
 
 ### Main Results
-| Method | GoPro | GoPro | HIDE | HIDE | REDS | REDS 
-|-------------------------|----------------------------|---------------------------|---------------------------|--------------------------| --------------------------| --------------------------| 
-|                         | PSNR                       | SSIM                      | PSNR                      | SSIM                     | PSNR  | SSIM  |        |
-| HINet                   | 32.71                      | 0.959                     | 30.33                     | 0.932                    | 28.83 | 0.863 | 
-| HINet-local (ours)            | 33.08                      | 0.962                     | 30.66                     | 0.936                    | 28.96 | 0.865 | 
-| MPRNet                  | 32.66                      | 0.959                     | 30.96                     | 0.939                    | - | - | 
-| MPRNet-local (ours)          | 33.31                      | 0.964                     | 31.19                     | 0.942                    | - | - | 
+Models with our TLC are denoted with -Local suffix.
+|Method|GoPro|HIDE|
+|---|---|---|
+|HINet|32.71|30.33|
+|HINet-Local (ours)|33.08 (+0.37)|30.66 (+0.33)|
+|MPRNet|32.66 |30.96 |
+|MPRNet-Local (ours)|33.31 (+0.65)|31.19 (+0.23)|
+|Restormer|32.92 |31.22 |
+|Restormer-Local (ours)|33.57 (+0.65)|31.49 (+0.27)|
 
-
+<img src="figures/tlc_qualitative_evaluation.png" alt="arch" style="zoom:100%;" />
 
 ### Evaluation
 <details>
@@ -153,10 +151,10 @@ This project is under the MIT license, and it is based on [BasicSR](https://gith
 
 ## Citations
 
-If TLSC helps your research or work, please consider citing TLSC.
+If tlc helps your research or work, please consider citing tlc.
 ```
-@article{chu2021tlsc,
-  title={Revisiting Global Statistics Aggregation for Improving Image Restoration},
+@article{chu2021tlc,
+  title={Improving Image Restoration by Revisiting Global Information Aggregation},
   author={Chu, Xiaojie and Chen, Liangyu and and Chen, Chengpeng and Lu, Xin},
   journal={arXiv preprint arXiv:2112.04491},
   year={2021}

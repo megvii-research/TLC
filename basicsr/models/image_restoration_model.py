@@ -14,10 +14,42 @@ from tqdm import tqdm
 from basicsr.models.archs import define_network
 from basicsr.models.base_model import BaseModel
 from basicsr.utils import get_root_logger, imwrite, tensor2img
+from basicsr.utils.dist_util import get_dist_info
 
 loss_module = importlib.import_module('basicsr.models.losses')
 metric_module = importlib.import_module('basicsr.metrics')
 
+# from SwinIR https://github.com/JingyunLiang/SwinIR/blob/main/main_test_swinir.py#L256-L284
+def test(img_lq, model, tile=None, tile_overlap=32, scale=1):
+    if tile is None:
+        # test the image as a whole
+        output = model(img_lq)
+        if isinstance(output, list):
+            output = output[-1]
+    else:
+        # test the image tile by tile
+        b, c, h, w = img_lq.size()
+        tile = min(tile, h, w)
+
+        stride = tile - tile_overlap
+        h_idx_list = list(range(0, h-tile, stride)) + [h-tile]
+        w_idx_list = list(range(0, w-tile, stride)) + [w-tile]
+        E = torch.zeros(b, c, h*scale, w*scale).type_as(img_lq)
+        W = torch.zeros_like(E)
+
+        for h_idx in h_idx_list:
+            for w_idx in w_idx_list:
+                in_patch = img_lq[..., h_idx:h_idx+tile, w_idx:w_idx+tile]
+                out_patch = model(in_patch)
+                if isinstance(out_patch, list):
+                    out_patch = out_patch[-1]
+                out_patch_mask = torch.ones_like(out_patch)
+
+                E[..., h_idx*scale:(h_idx+tile)*scale, w_idx*scale:(w_idx+tile)*scale].add_(out_patch)
+                W[..., h_idx*scale:(h_idx+tile)*scale, w_idx*scale:(w_idx+tile)*scale].add_(out_patch_mask)
+        output = E.div_(W)
+
+    return output
 
 class ImageRestorationModel(BaseModel):
     """Base Deblur model for single image deblur."""
@@ -135,6 +167,8 @@ class ImageRestorationModel(BaseModel):
         step_j = crop_size if num_col == 1 else math.ceil((w - crop_size) / (num_col - 1) - 1e-8)
         step_i = crop_size if num_row == 1 else math.ceil((h - crop_size) / (num_row - 1) - 1e-8)
 
+        if self.opt['val'].get('step', False):
+            step_j = step_i = self.opt['val']['step']
 
         # print('step_i, stepj', step_i, step_j)
         # exit(0)
@@ -256,9 +290,14 @@ class ImageRestorationModel(BaseModel):
                 j = i + m
                 if j >= n:
                     j = n
-                pred = self.net_g(self.lq[i:j, :, :, :])
-                if isinstance(pred, list):
-                    pred = pred[-1]
+                # pred = self.net_g(self.lq[i:j, :, :, :])
+                pred = test(self.lq[i:j, :, :, :], self.net_g,
+                    self.opt['val'].get('tile', None),
+                    self.opt['val'].get('tile_overlap', None),
+                    self.opt['scale']
+                    )
+                # if isinstance(pred, list):
+                #     pred = pred[-1]
                 # print('pred .. size', pred.size())
                 outs.append(pred)
                 i = j
@@ -282,13 +321,128 @@ class ImageRestorationModel(BaseModel):
         imwrite(sr_img, save_path)
 
     def dist_validation(self, dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image):
-        logger = get_root_logger()
-        # logger.info('Only support single GPU validation.')
-        import os
-        if os.environ['LOCAL_RANK'] == '0':
-            return self.nondist_validation(dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image)
-        else:
-            return 0.
+        # logger = get_root_logger()
+        # # logger.info('Only support single GPU validation.')
+        # import os
+        # if os.environ['LOCAL_RANK'] == '0':
+        #     return self.nondist_validation(dataloader, current_iter, tb_logger, save_img, rgb2bgr, use_image)
+        # else:
+        #     return 0.
+        dataset_name = dataloader.dataset.opt['name']
+        with_metrics = self.opt['val'].get('metrics') is not None
+        if with_metrics:
+            self.metric_results = {
+                metric: 0
+                for metric in self.opt['val']['metrics'].keys()
+            }
+
+        rank, world_size = get_dist_info()
+        if rank == 0:
+            pbar = tqdm(total=len(dataloader), unit='image')
+
+        cnt = 0
+
+        for idx, val_data in enumerate(dataloader):
+            if idx % world_size != rank:
+                continue
+
+            img_name = osp.splitext(osp.basename(val_data['lq_path'][0]))[0]
+
+            self.feed_data(val_data)
+            if self.opt['val'].get('grids', False):
+                self.grids()
+
+            self.test()
+
+            if self.opt['val'].get('grids', False):
+                self.grids_inverse()
+
+            visuals = self.get_current_visuals()
+            sr_img = tensor2img([visuals['result']], rgb2bgr=rgb2bgr)
+            if 'gt' in visuals:
+                gt_img = tensor2img([visuals['gt']], rgb2bgr=rgb2bgr)
+                del self.gt
+
+            # tentative for out of GPU memory
+            del self.lq
+            del self.output
+            torch.cuda.empty_cache()
+
+            if save_img:
+                if self.opt['is_train']:
+
+                    save_img_path = osp.join(self.opt['path']['visualization'],
+                                                img_name,
+                                                f'{img_name}_{current_iter}.png')
+
+                    save_gt_img_path = osp.join(self.opt['path']['visualization'],
+                                                img_name,
+                                                f'{img_name}_{current_iter}_gt.png')
+                else:
+                    save_img_path = osp.join(
+                        self.opt['path']['visualization'], dataset_name,
+                        f'{img_name}.png')
+                    save_gt_img_path = osp.join(
+                        self.opt['path']['visualization'], dataset_name,
+                        f'{img_name}_gt.png')
+
+                imwrite(sr_img, save_img_path)
+                imwrite(gt_img, save_gt_img_path)
+
+            if with_metrics:
+                # calculate metrics
+                opt_metric = deepcopy(self.opt['val']['metrics'])
+                if use_image:
+                    for name, opt_ in opt_metric.items():
+                        metric_type = opt_.pop('type')
+                        self.metric_results[name] += getattr(
+                            metric_module, metric_type)(sr_img, gt_img, **opt_)
+                else:
+                    for name, opt_ in opt_metric.items():
+                        metric_type = opt_.pop('type')
+                        self.metric_results[name] += getattr(
+                            metric_module, metric_type)(visuals['result'], visuals['gt'], **opt_)
+
+            cnt += 1
+            if rank == 0:
+                for _ in range(world_size):
+                    pbar.update(1)
+                    pbar.set_description(f'Test {img_name}')
+        if rank == 0:
+            pbar.close()
+
+        # current_metric = 0.
+        collected_metrics = OrderedDict()
+        if with_metrics:
+            for metric in self.metric_results.keys():
+                collected_metrics[metric] = torch.tensor(self.metric_results[metric]).float().to(self.device)
+            collected_metrics['cnt'] = torch.tensor(cnt).float().to(self.device)
+
+            self.collected_metrics = collected_metrics
+        
+        keys = []
+        metrics = []
+        for name, value in self.collected_metrics.items():
+            keys.append(name)
+            metrics.append(value)
+        metrics = torch.stack(metrics, 0)
+        torch.distributed.reduce(metrics, dst=0)
+        if self.opt['rank'] == 0:
+            metrics_dict = {}
+            cnt = 0
+            for key, metric in zip(keys, metrics):
+                if key == 'cnt':
+                    cnt = float(metric)
+                    continue
+                metrics_dict[key] = float(metric)
+
+            for key in metrics_dict:
+                metrics_dict[key] /= cnt
+
+            self.metric_results = metrics_dict
+            self._log_validation_metric_values(current_iter, dataloader.dataset.opt['name'],
+                                               tb_logger)
+        return 0.
 
     def nondist_validation(self, dataloader, current_iter, tb_logger,
                            save_img, rgb2bgr, use_image):

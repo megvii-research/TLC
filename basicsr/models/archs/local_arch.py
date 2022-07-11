@@ -113,7 +113,7 @@ def replace_layers(model, base_size, fast_imp, **kwargs):
             replace_layers(m, base_size, fast_imp, **kwargs)
             
         if isinstance(m, nn.AdaptiveAvgPool2d): 
-            pool = AvgPool2d(base_size=base_size, fast_imp=fast_imp)
+            pool = AvgPool2d(base_size=base_size, fast_imp=fast_imp, **kwargs)
             assert m.output_size == 1
             setattr(model, n, pool)
 
@@ -140,4 +140,4 @@ class MPRNetLocal(Local_Base, MPRNet):
     def __init__(self, *args, base_size, fast_imp=False, **kwargs):
         Local_Base.__init__(self)
         MPRNet.__init__(self, *args, **kwargs)
-        self.convert(base_size=base_size, fast_imp=fast_imp)
+        self.convert(base_size=base_size, fast_imp=fast_imp, auto_pad=False)
