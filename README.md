@@ -30,14 +30,14 @@ cuda 10.2
 
 
 ```
-git clone https://github.com/megvii-research/tlc.git
-cd tlc
+git clone https://github.com/megvii-research/TLC.git
+cd TLC
 pip install -r requirements.txt
 python setup.py develop
 ```
 
 ### Quick Start (Single Image Inference)
-
+* Restormer-Local Deblur Colab Demo: [<a href="https://colab.research.google.com/drive/1uy-rQtqmoBca17IUmRrTCclsZkpMDWGV?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="google colab logo"></a>](https://colab.research.google.com/drive/1uy-rQtqmoBca17IUmRrTCclsZkpMDWGV?usp=sharing)
 
 * ```python basicsr/demo.py -opt options/demo/demo.yml```
   * modified your [input and output path](https://github.com/megvii-research/tlc/blob/main/options/demo/demo.yml#L16-L17)
@@ -157,7 +157,7 @@ This project is under the MIT license, and it is based on [BasicSR](https://gith
 
 ## Citations
 
-If tlc helps your research or work, please consider citing tlc.
+If TLC helps your research or work, please consider citing TLC.
 ```
 @article{chu2021tlc,
   title={Improving Image Restoration by Revisiting Global Information Aggregation},
