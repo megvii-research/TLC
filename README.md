@@ -1,5 +1,11 @@
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/image-defocus-deblurring-on-dpd)](https://paperswithcode.com/sota/image-defocus-deblurring-on-dpd?p=revisiting-global-statistics-aggregation-for)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-gopro)](https://paperswithcode.com/sota/deblurring-on-gopro?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/image-deblurring-on-gopro)](https://paperswithcode.com/sota/image-deblurring-on-gopro?p=revisiting-global-statistics-aggregation-for)
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/deblurring-on-hide-trained-on-gopro)](https://paperswithcode.com/sota/deblurring-on-hide-trained-on-gopro?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/grayscale-image-denoising-on-urban100-sigma15-1)](https://paperswithcode.com/sota/grayscale-image-denoising-on-urban100-sigma15-1?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/grayscale-image-denoising-on-urban100-sigma25)](https://paperswithcode.com/sota/grayscale-image-denoising-on-urban100-sigma25?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/color-image-denoising-on-urban100-sigma50)](https://paperswithcode.com/sota/color-image-denoising-on-urban100-sigma50?p=revisiting-global-statistics-aggregation-for)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/revisiting-global-statistics-aggregation-for/grayscale-image-denoising-on-urban100-sigma50)](https://paperswithcode.com/sota/grayscale-image-denoising-on-urban100-sigma50?p=revisiting-global-statistics-aggregation-for)
 
 # Improving Image Restoration by Revisiting Global Information Aggregation
 By Xiaojie Chu, Liangyu Chen, Chengpeng Chen, Xin Lu
@@ -12,7 +18,7 @@ This repository is an official implementation of the [Improving Image Restoratio
 > Global operations, such as global average pooling, are widely used in top-performance image restorers. They aggregate global information from input features along entire spatial dimensions but behave differently during training and inference in image restoration tasks: they are based on different regions, namely the cropped patches (from images) and the full-resolution images. This paper revisits global information aggregation and finds that the image-based features during inference have a different distribution than the patch-based features during training. This train-test inconsistency negatively impacts the performance of models, which is severely overlooked by previous works. To reduce the inconsistency and improve test-time performance, we propose a simple method called Test-time Local Converter (TLC). Our TLC converts global operations to local ones only during inference so that they aggregate features within local spatial regions rather than the entire large images. The proposed method can be applied to various global modules (e.g., normalization, channel and spatial attention) with negligible costs. Without the need for any fine-tuning, TLC improves state-of-the-art results on several image restoration tasks, including single-image motion deblurring, video deblurring, defocus deblurring, and image denoising. In particular, with TLC, our Restormer-Local improves the state-of-the-art result in single image deblurring from 32.92 dB to 33.57 dB on GoPro dataset.
 
 
-# Main Results
+## Main Results
 Models with our TLC are denoted with -Local suffix.
 |Method|GoPro|HIDE|
 |---|---|---|
@@ -26,9 +32,9 @@ Models with our TLC are denoted with -Local suffix.
 <img src="figures/tlc_qualitative_evaluation.png" alt="arch" style="zoom:100%;" />
 
 
-# Usage
+## Usage
 
-## Installation
+### **Installation**
 
 This implementation based on [BasicSR](https://github.com/xinntao/BasicSR) which is a open source toolbox for image/video restoration tasks. 
 
@@ -46,7 +52,7 @@ pip install -r requirements.txt
 python setup.py develop
 ```
 
-## Quick Start (Single Image Inference)
+### **Quick Start (Single Image Inference)**
 * Restormer-Local Deblur Colab Demo: [<a href="https://colab.research.google.com/drive/1uy-rQtqmoBca17IUmRrTCclsZkpMDWGV?usp=sharing"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="google colab logo"></a>](https://colab.research.google.com/drive/1uy-rQtqmoBca17IUmRrTCclsZkpMDWGV?usp=sharing)
 
 * ```python basicsr/demo.py -opt options/demo/demo.yml```
@@ -55,7 +61,7 @@ python setup.py develop
   * [pretrained model](https://github.com/megvii-research/tlc/blob/main/options/demo/demo.yml#L26), it should match the define network.
      * for pretrained model, see [here](https://github.com/megvii-research/tlc/blob/main/experiments/pretrained_models/README.md)
 
-## Evaluation
+### **Evaluation**
 <details>
   <summary>Image Deblur - GoPro dataset (Click to expand) </summary>
 
@@ -116,7 +122,7 @@ python setup.py develop
 
 > Tricks: Change the 'fast_imp: false' (naive implementation) to 'fast_imp: true' (faster implementation) in MPRNetLocal config can achieve faster inference speed. 
 
-# News
+## News
 Our work has been applied to the following:
 
 **2022.06.19** [**NAFSSR: Stereo Image Super-Resolution Using NAFNet**](https://arxiv.org/abs/2204.08714) won the **1st place** on the NTIRE 2022 Stereo Image Super-resolution Challenge! It is selected for an ORAL presentation at CVPR 2022, NTIRE workshop  :tada: [Presentation video](https://drive.google.com/file/d/16w33zrb3UI0ZIhvvdTvGB2MP01j0zJve/view), [slides](https://data.vision.ee.ethz.ch/cvl/ntire22/slides/Chu_NAFSSR_slides.pdf) and [poster](https://data.vision.ee.ethz.ch/cvl/ntire22/posters/Chu_NAFSSR_poster.pdf) are available now. [[Code]](https://github.com/megvii-research/NAFNet/blob/main/docs/StereoSR.md)
@@ -124,12 +130,12 @@ Our work has been applied to the following:
 **2022.04.12** [**Simple Baselines for Image Restoration (ECCV 2022)**](https://arxiv.org/abs/2204.04676) reveals the nonlinear activation functions, e.g. ReLU, GELU, Sigmoid, and etc. are **not necessary** to achieve SOTA performance. The paper provide a simple baseline, NAFNet: Nonlinear Activation Free Network for Image Restoration tasks, and acheves SOTA performance on Image Denoising and Image Deblurring. [[Code]](https://github.com/megvii-research/NAFNet)
 
 
-# License
+## License
 
 This project is under the MIT license, and it is based on [BasicSR](https://github.com/xinntao/BasicSR) which is under the Apache 2.0 license.
 
 
-# Citations
+## Citations
 
 If TLC helps your research or work, please consider citing TLC.
 ```
@@ -141,6 +147,6 @@ If TLC helps your research or work, please consider citing TLC.
 }
 ```
 
-# Contact
+## Contact
 
 If you have any questions, please contact chuxiaojie@megvii.com or chenliangyu@megvii.com.
