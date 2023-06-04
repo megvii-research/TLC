@@ -28,8 +28,8 @@ class AvgPool2d(nn.Module):
         self.max_r2 = self.rs[0]
 
     def extra_repr(self) -> str:
-        return 'kernel_size={}, base_size={}, stride={}, fast_imp={}'.format(
-            self.kernel_size, self.base_size, self.kernel_size, self.fast_imp
+        return 'kernel_size={}, base_size={}, stride=1, fast_imp={}'.format(
+            self.kernel_size, self.base_size, self.fast_imp
         )
            
     def forward(self, x):
