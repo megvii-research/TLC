@@ -197,10 +197,12 @@ class Restormer(nn.Module):
         ffn_expansion_factor = 2.66,
         bias = False,
         LayerNorm_type = 'WithBias',   ## Other option 'BiasFree'
-        dual_pixel_task = False        ## True for dual-pixel defocus deblurring only. Also set inp_channels=6
+        dual_pixel_task = False,        ## True for dual-pixel defocus deblurring only. Also set inp_channels=6
+        padder_size=8
     ):
 
         super(Restormer, self).__init__()
+        self.padder_size = padder_size # Prevent size mismatch between downsampling and upsampling
 
         self.patch_embed = OverlapPatchEmbed(inp_channels, dim)
 
@@ -238,7 +240,18 @@ class Restormer(nn.Module):
             
         self.output = nn.Conv2d(int(dim*2**1), out_channels, kernel_size=3, stride=1, padding=1, bias=bias)
 
+    def check_image_size(self, x):
+        if self.padder_size == 0:
+            return x
+        _, _, h, w = x.size()
+        mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
+        mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h))
+        return x
+    
     def forward(self, inp_img):
+        H, W = inp_img.shape[-2:]
+        inp_img = self.check_image_size(inp_img)
 
         inp_enc_level1 = self.patch_embed(inp_img)
         out_enc_level1 = self.encoder_level1(inp_enc_level1)
@@ -277,9 +290,13 @@ class Restormer(nn.Module):
             out_dec_level1 = self.output(out_dec_level1) + inp_img
 
 
-        return out_dec_level1
+        return out_dec_level1[:,:,:H,:W]
 
-from basicsr.models.archs.local_arch import AvgPool2d
+try:
+    from .local_arch import AvgPool2d
+except:
+    from local_arch import AvgPool2d
+
 class LocalAttention(Attention):
     def __init__(self, dim, num_heads, bias, base_size=None, kernel_size=None, fast_imp=False, train_size=None):
         super().__init__(dim, num_heads, bias)
@@ -444,3 +461,11 @@ class RestormerLocal(Local_Base, Restormer):
         self.eval()
         with torch.no_grad():
             self.convert(base_size=base_size, train_size=train_size, fast_imp=fast_imp)
+
+if __name__ == '__main__':
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    net = RestormerLocal().to(device)
+    for size in [31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113]:
+        img = torch.randn(1, 3, size, size).to(device)
+        output = net(img)
+        print(output.shape)

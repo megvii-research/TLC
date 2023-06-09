@@ -245,8 +245,9 @@ class ORSNet(nn.Module):
 
 ##########################################################################
 class MPRNet(nn.Module):
-    def __init__(self, in_c=3, out_c=3, n_feat=96, scale_unetfeats=48, scale_orsnetfeats=32, num_cab=8, kernel_size=3, reduction=4, bias=False):
+    def __init__(self, in_c=3, out_c=3, n_feat=96, scale_unetfeats=48, scale_orsnetfeats=32, num_cab=8, kernel_size=3, reduction=4, bias=False, padder_size=8):
         super(MPRNet, self).__init__()
+        self.padder_size = padder_size # Prevent size mismatch between downsampling and upsampling
 
         act=nn.PReLU()
         self.shallow_feat1 = nn.Sequential(conv(in_c, n_feat, kernel_size, bias=bias), CAB(n_feat,kernel_size, reduction, bias=bias, act=act))
@@ -269,8 +270,20 @@ class MPRNet(nn.Module):
         self.concat23  = conv(n_feat*2, n_feat+scale_orsnetfeats, kernel_size, bias=bias)
         self.tail     = conv(n_feat+scale_orsnetfeats, out_c, kernel_size, bias=bias)
 
+    def check_image_size(self, x):
+        if self.padder_size == 0:
+            return x
+        _, _, h, w = x.size()
+        mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
+        mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h))
+        return x
+
     def forward(self, x3_img):
         # Original-resolution Image for Stage 3
+        ori_H = x3_img.size(2)
+        ori_W = x3_img.size(3)
+        x3_img = self.check_image_size(x3_img)
         H = x3_img.size(2)
         W = x3_img.size(3)
 
@@ -357,4 +370,6 @@ class MPRNet(nn.Module):
 
         stage3_img = self.tail(x3_cat)
 
-        return [stage3_img+x3_img]
+        out = stage3_img+x3_img
+        out = out[:, :, :ori_H, :ori_W]
+        return [out]

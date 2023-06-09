@@ -9,13 +9,18 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from basicsr.models.archs.hinet_arch import HINet
-from basicsr.models.archs.mprnet_arch import MPRNet
+try:
+    from .hinet_arch import HINet
+except:
+    from hinet_arch import HINet
+try:
+    from .mprnet_arch import MPRNet
+except:
+    from mprnet_arch import MPRNet
 
-train_size=(1,3,256,256)
 
 class AvgPool2d(nn.Module):
-    def __init__(self, kernel_size=None, base_size=None, auto_pad=True, fast_imp=False):
+    def __init__(self, kernel_size=None, base_size=None, auto_pad=True, fast_imp=False, train_size=(1,3,256,256)):
         super().__init__()
         self.kernel_size = kernel_size
         self.base_size = base_size
@@ -26,6 +31,7 @@ class AvgPool2d(nn.Module):
         self.rs = [5,4,3,2,1]
         self.max_r1 = self.rs[0]
         self.max_r2 = self.rs[0]
+        self.train_size = train_size
 
     def extra_repr(self) -> str:
         return 'kernel_size={}, base_size={}, stride=1, fast_imp={}'.format(
@@ -37,12 +43,12 @@ class AvgPool2d(nn.Module):
             if isinstance(self.base_size, int):
                 self.base_size = (self.base_size, self.base_size)
             self.kernel_size = list(self.base_size)
-            self.kernel_size[0] = x.shape[2]*self.base_size[0]//train_size[-2]
-            self.kernel_size[1] = x.shape[3]*self.base_size[1]//train_size[-1]
+            self.kernel_size[0] = x.shape[2]*self.base_size[0]//self.train_size[-2]
+            self.kernel_size[1] = x.shape[3]*self.base_size[1]//self.train_size[-1]
             
             # only used for fast implementation
-            self.max_r1 = max(1, self.rs[0]*x.shape[2]//train_size[-2])
-            self.max_r2 = max(1, self.rs[0]*x.shape[3]//train_size[-1])
+            self.max_r1 = max(1, self.rs[0]*x.shape[2]//self.train_size[-2])
+            self.max_r2 = max(1, self.rs[0]*x.shape[3]//self.train_size[-1])
 
         if self.fast_imp:   # Non-equivalent implementation but faster
             h, w = x.shape[2:]
@@ -124,20 +130,35 @@ def replace_layers(model, base_size, fast_imp, **kwargs):
             setattr(model, n, norm)
 
 class Local_Base():
-    def convert(self, *args, **kwargs):
+    def convert(self, *args, train_size, **kwargs):
         replace_layers(self, *args, **kwargs)
         imgs = torch.rand(train_size)
         with torch.no_grad():
             self.forward(imgs)
 
 class HINetLocal(Local_Base, HINet):
-    def __init__(self, *args, base_size, fast_imp=False, **kwargs):
+    def __init__(self, *args, base_size=None, train_size=(1,3,256,256), fast_imp=False, **kwargs):
         Local_Base.__init__(self)
         HINet.__init__(self, *args, **kwargs)
-        self.convert(base_size=base_size, fast_imp=fast_imp)
+        N, C, H, W = train_size
+        if base_size is None:
+            base_size = (int(H * 1.5), int(W * 1.5))
+        self.convert(base_size=base_size, fast_imp=fast_imp, train_size=train_size)
 
 class MPRNetLocal(Local_Base, MPRNet):
-    def __init__(self, *args, base_size, fast_imp=False, **kwargs):
+    def __init__(self, *args, base_size=None, train_size=(1,3,256,256), fast_imp=False, **kwargs):
         Local_Base.__init__(self)
         MPRNet.__init__(self, *args, **kwargs)
-        self.convert(base_size=base_size, fast_imp=fast_imp, auto_pad=False)
+        N, C, H, W = train_size
+        if base_size is None:
+            base_size = (int(H * 1.5), int(W * 1.5))
+        self.convert(base_size=base_size, fast_imp=fast_imp, auto_pad=False, train_size=train_size)
+
+if __name__ == '__main__':
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    net = MPRNetLocal().to(device)
+    # net = HINetLocal().to(device)
+    for size in [31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113]:
+        img = torch.randn(1, 3, size, size).to(device)
+        outputs = net(img)
+        print(*[x.shape for x in outputs])

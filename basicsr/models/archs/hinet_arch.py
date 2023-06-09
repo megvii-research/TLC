@@ -14,6 +14,7 @@ HINet: Half Instance Normalization Network for Image Restoration
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 def conv3x3(in_chn, out_chn, bias=True):
     layer = nn.Conv2d(in_chn, out_chn, kernel_size=3, stride=1, padding=1, bias=bias)
@@ -46,8 +47,10 @@ class SAM(nn.Module):
 
 class HINet(nn.Module):
 
-    def __init__(self, in_chn=3, wf=64, depth=5, relu_slope=0.2, hin_position_left=0, hin_position_right=4):
+    def __init__(self, in_chn=3, wf=64, depth=5, relu_slope=0.2, hin_position_left=0, hin_position_right=4, padder_size=16):
         super(HINet, self).__init__()
+        self.padder_size = padder_size
+
         self.depth = depth
         self.down_path_1 = nn.ModuleList()
         self.down_path_2 = nn.ModuleList()
@@ -77,7 +80,19 @@ class HINet(nn.Module):
 
         self.last = conv3x3(prev_channels, in_chn, bias=True)
 
+    def check_image_size(self, x):
+        if self.padder_size == 0:
+            return x
+        _, _, h, w = x.size()
+        mod_pad_h = (self.padder_size - h % self.padder_size) % self.padder_size
+        mod_pad_w = (self.padder_size - w % self.padder_size) % self.padder_size
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h))
+        return x
+
     def forward(self, x):
+        H, W = x.shape[-2:]
+        x = self.check_image_size(x)
+
         image = x
         #stage 1
         x1 = self.conv_01(image)
@@ -111,7 +126,7 @@ class HINet(nn.Module):
 
         out_2 = self.last(x2)
         out_2 = out_2 + image
-        return [out_1, out_2]
+        return [out_1[:,:,:H,:W], out_2[:,:,:H,:W]]
 
     def get_input_chn(self, in_chn):
         return in_chn
